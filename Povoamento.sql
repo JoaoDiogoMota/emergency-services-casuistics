@@ -1,14 +1,30 @@
 use Urgency;
 
+
+delete from dim_drug;
+delete from dim_date;
+
 -- Povoar Dim_Drug
 INSERT INTO Dim_Drug(Cod_Drug,Description)
 SELECT DISTINCT COD_DRUG, DESC_DRUG FROM `dados`.`urgency_prescriptions`;
+
+-- Povoar Dim_Hour. Fazer que ainda nao está feito. Aplicar a split à string para sacar a hora
+DROP TEMPORARY TABLE IF EXISTS Hours;
+CREATE TEMPORARY TABLE Hours (`hora` INT, `minuto` INT) ENGINE=MEMORY; -- Tabela que aglomera todas as datas
+INSERT INTO Hours SELECT STR_TO_DATE(DT_PRESCRIPTION,"%Y/%m/%d %T") FROM `dados`.`urgency_prescriptions`;
+INSERT INTO Hours SELECT STR_TO_DATE(DATE_OF_BIRTH,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
+INSERT INTO Hours SELECT STR_TO_DATE(DT_ADMITION_URG,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
+INSERT INTO Hours SELECT STR_TO_DATE(DT_ADMITION_TRAIGE,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
+INSERT INTO Hours SELECT STR_TO_DATE(DT_DIAGNOSIS,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
+INSERT INTO Hours SELECT STR_TO_DATE(DT_DISCHARGE,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
+INSERT INTO Hours SELECT STR_TO_DATE(DT_PRESCRIPTION,"%Y/%m/%d %T") FROM `dados`.`urgency_procedures`;
+INSERT INTO Hours SELECT STR_TO_DATE(DT_BEGIN,"%Y/%m/%d %T") FROM `dados`.`urgency_procedures`;
 
 
 -- Povoar Dim_Date 
 DROP TEMPORARY TABLE IF EXISTS Dates;
 CREATE TEMPORARY TABLE Dates (`data` DATETIME) ENGINE=MEMORY; -- Tabela que aglomera todas as datas
-INSERT INTO Dates SELECT STR_TO_DATE(DT_PRESCRIPTION,"%Y-%m-%d %T") FROM `dados`.`urgency_prescriptions`;
+INSERT INTO Dates SELECT STR_TO_DATE(DT_PRESCRIPTION,"%Y/%m/%d %T") FROM `dados`.`urgency_prescriptions`;
 INSERT INTO Dates SELECT STR_TO_DATE(DATE_OF_BIRTH,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
 INSERT INTO Dates SELECT STR_TO_DATE(DT_ADMITION_URG,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
 INSERT INTO Dates SELECT STR_TO_DATE(DT_ADMITION_TRAIGE,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
@@ -17,19 +33,76 @@ INSERT INTO Dates SELECT STR_TO_DATE(DT_DISCHARGE,"%Y/%m/%d %T") FROM `dados`.`u
 INSERT INTO Dates SELECT STR_TO_DATE(DT_PRESCRIPTION,"%Y/%m/%d %T") FROM `dados`.`urgency_procedures`;
 INSERT INTO Dates SELECT STR_TO_DATE(DT_BEGIN,"%Y/%m/%d %T") FROM `dados`.`urgency_procedures`;
 
+select STR_TO_DATE("2018/02/02 12:02:02","%h:%m:%s");
+
 ALTER TABLE Dim_Date AUTO_INCREMENT = 1;
 
 INSERT INTO Dim_Date(Date)
 SELECT DISTINCT data FROM Dates;
 
-select * FROM Dim_Date;
 
--- Povoar Dim_Urgency_Prescription -> Não está a dar não sei porque
+-- Povoar Dim_Urgency_Prescription -> Dividir em vários slots para conseguir correr (SÓ POVOEI O PRIMEIRO INTERVALO)
 INSERT INTO Dim_Urgency_Prescription(Cod_Prescription,Prof_Prescription,Quantity,FK_Date_Prescription,FK_Drug) 
 SELECT DISTINCT uP.COD_PRESCRIPTION, uP.ID_PROF_PRESCRIPTION, uP.QT, d.idDate, dr.idDrug
 FROM `dados`.`urgency_prescriptions` uP 
 LEFT JOIN Dim_Drug dr ON dr.Cod_Drug=uP.COD_DRUG AND dr.Description=uP.DESC_DRUG
-LEFT JOIN Dim_Date d ON d.Date=uP.DT_PRESCRIPTION;
+LEFT JOIN Dim_Date d ON d.Date=uP.DT_PRESCRIPTION
+WHERE `COD_PRESCRIPTION`>= 16369810 AND `COD_PRESCRIPTION` <16420000;
+
+INSERT INTO Dim_Urgency_Prescription(Cod_Prescription,Prof_Prescription,Quantity,FK_Date_Prescription,FK_Drug) 
+SELECT DISTINCT uP.COD_PRESCRIPTION, uP.ID_PROF_PRESCRIPTION, uP.QT, d.idDate, dr.idDrug
+FROM `dados`.`urgency_prescriptions` uP 
+LEFT JOIN Dim_Drug dr ON dr.Cod_Drug=uP.COD_DRUG AND dr.Description=uP.DESC_DRUG
+LEFT JOIN Dim_Date d ON d.Date=uP.DT_PRESCRIPTION
+WHERE `COD_PRESCRIPTION`>=16420000 AND `COD_PRESCRIPTION` <16507000;
+
+INSERT INTO Dim_Urgency_Prescription(Cod_Prescription,Prof_Prescription,Quantity,FK_Date_Prescription,FK_Drug) 
+SELECT DISTINCT uP.COD_PRESCRIPTION, uP.ID_PROF_PRESCRIPTION, uP.QT, d.idDate, dr.idDrug
+FROM `dados`.`urgency_prescriptions` uP 
+LEFT JOIN Dim_Drug dr ON dr.Cod_Drug=uP.COD_DRUG AND dr.Description=uP.DESC_DRUG
+LEFT JOIN Dim_Date d ON d.Date=uP.DT_PRESCRIPTION
+WHERE `COD_PRESCRIPTION`>=16507000 AND `COD_PRESCRIPTION` <16545000;
+
+INSERT INTO Dim_Urgency_Prescription(Cod_Prescription,Prof_Prescription,Quantity,FK_Date_Prescription,FK_Drug) 
+SELECT DISTINCT uP.COD_PRESCRIPTION, uP.ID_PROF_PRESCRIPTION, uP.QT, d.idDate, dr.idDrug
+FROM `dados`.`urgency_prescriptions` uP 
+LEFT JOIN Dim_Drug dr ON dr.Cod_Drug=uP.COD_DRUG AND dr.Description=uP.DESC_DRUG
+LEFT JOIN Dim_Date d ON d.Date=uP.DT_PRESCRIPTION
+WHERE `COD_PRESCRIPTION`>=16545000 AND `COD_PRESCRIPTION` <16584700;
+
+INSERT INTO Dim_Urgency_Prescription(Cod_Prescription,Prof_Prescription,Quantity,FK_Date_Prescription,FK_Drug) 
+SELECT DISTINCT uP.COD_PRESCRIPTION, uP.ID_PROF_PRESCRIPTION, uP.QT, d.idDate, dr.idDrug
+FROM `dados`.`urgency_prescriptions` uP 
+LEFT JOIN Dim_Drug dr ON dr.Cod_Drug=uP.COD_DRUG AND dr.Description=uP.DESC_DRUG
+LEFT JOIN Dim_Date d ON d.Date=uP.DT_PRESCRIPTION
+WHERE `COD_PRESCRIPTION`>=16584700 AND `COD_PRESCRIPTION` <16624000;
+
+INSERT INTO Dim_Urgency_Prescription(Cod_Prescription,Prof_Prescription,Quantity,FK_Date_Prescription,FK_Drug) 
+SELECT DISTINCT uP.COD_PRESCRIPTION, uP.ID_PROF_PRESCRIPTION, uP.QT, d.idDate, dr.idDrug
+FROM `dados`.`urgency_prescriptions` uP 
+LEFT JOIN Dim_Drug dr ON dr.Cod_Drug=uP.COD_DRUG AND dr.Description=uP.DESC_DRUG
+LEFT JOIN Dim_Date d ON d.Date=uP.DT_PRESCRIPTION
+WHERE `COD_PRESCRIPTION`>=16624000 AND `COD_PRESCRIPTION` <16655000;
+
+INSERT INTO Dim_Urgency_Prescription(Cod_Prescription,Prof_Prescription,Quantity,FK_Date_Prescription,FK_Drug) 
+SELECT DISTINCT uP.COD_PRESCRIPTION, uP.ID_PROF_PRESCRIPTION, uP.QT, d.idDate, dr.idDrug
+FROM `dados`.`urgency_prescriptions` uP 
+LEFT JOIN Dim_Drug dr ON dr.Cod_Drug=uP.COD_DRUG AND dr.Description=uP.DESC_DRUG
+LEFT JOIN Dim_Date d ON d.Date=uP.DT_PRESCRIPTION
+WHERE `COD_PRESCRIPTION`>=16655000 AND `COD_PRESCRIPTION` <16694000;
+
+INSERT INTO Dim_Urgency_Prescription(Cod_Prescription,Prof_Prescription,Quantity,FK_Date_Prescription,FK_Drug) 
+SELECT DISTINCT uP.COD_PRESCRIPTION, uP.ID_PROF_PRESCRIPTION, uP.QT, d.idDate, dr.idDrug
+FROM `dados`.`urgency_prescriptions` uP 
+LEFT JOIN Dim_Drug dr ON dr.Cod_Drug=uP.COD_DRUG AND dr.Description=uP.DESC_DRUG
+LEFT JOIN Dim_Date d ON d.Date=uP.DT_PRESCRIPTION
+WHERE `COD_PRESCRIPTION`>=16694000 AND `COD_PRESCRIPTION` <=17235985;
+
+
+
+
+
+
 
 
 select * FROM `dados`.`urgency_prescriptions`;
