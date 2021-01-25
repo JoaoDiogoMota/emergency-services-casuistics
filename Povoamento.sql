@@ -159,10 +159,33 @@ SELECT DISTINCT ID_DESTINATION,DESC_DESTINATION FROM `dados`.`urgency_episodes`;
 -- Povoar Fact_Diagnosis -> Ainda não dá
 INSERT INTO Facto_Diagnosis....;
 
--- Povoar Dim_Level
-INSERT INTO Dim_Level (idLevel,CodLevel,Description) VALUES
-1, (SELECT 
 
+CREATE SCHEMA dados;
+
+-- Povoar Dim_Level
+Use urgency;
+-- Povoar todos os niveis 1
+INSERT INTO dim_level (idLevel,Cod_Level,Description)
+SELECT DISTINCT 1 AS idd,level_1_code,level_1_desc from `dados`.`icd9_hierarchy`;
+-- Povoar todos os niveis 2
+INSERT INTO dim_level (idLevel,Cod_Level,Description)
+SELECT DISTINCT 2 AS idd,level_2_code,level_2_desc from `dados`.`icd9_hierarchy`;
+-- Povoar todos os niveis 3
+INSERT INTO dim_level (idLevel,Cod_Level,Description)
+SELECT DISTINCT 3 AS idd,level_3_code,level_3_desc from `dados`.`icd9_hierarchy`;
+-- Povoar todos os niveis 4
+INSERT INTO dim_level (idLevel,Cod_Level,Description)
+SELECT DISTINCT 4 AS idd,level_4_code,level_4_desc from `dados`.`icd9_hierarchy`;
+-- Povoar todos os niveis 5
+INSERT INTO dim_level (idLevel,Cod_Level,Description)
+SELECT DISTINCT 5 AS idd,level_5_code,level_5_desc from `dados`.`icd9_hierarchy`;
+
+-- Povoar Dim_Info
+INSERT INTO dim_info (cod_diagnosis,description,FK_LevelID,FK_LevelCod)
+SELECT a1.COD_DIAGNOSIS, a1.DIAGNOSIS, a2.idLevel, a2.Cod_Level
+FROM `dados`.`urgency_episodes` a1
+INNER JOIN 	dim_level a2 
+ON SUBSTRING_INDEX(a2.cod_level,'-',1) <= SUBSTRING_INDEX(a1.COD_DIAGNOSIS,'-',1)
 
 
 DELIMITER //
