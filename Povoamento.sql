@@ -1,24 +1,55 @@
 use Urgency;
 
-
 delete from dim_drug;
+
 delete from dim_date;
 
 -- Povoar Dim_Drug
 INSERT INTO Dim_Drug(Cod_Drug,Description)
 SELECT DISTINCT COD_DRUG, DESC_DRUG FROM `dados`.`urgency_prescriptions`;
 
--- Povoar Dim_Hour. Fazer que ainda nao está feito. Aplicar a split à string para sacar a hora
+
+/* SOLUÇAO COM DIM_HOUR
+
 DROP TEMPORARY TABLE IF EXISTS Hours;
-CREATE TEMPORARY TABLE Hours (`hora` INT, `minuto` INT) ENGINE=MEMORY; -- Tabela que aglomera todas as datas
-INSERT INTO Hours SELECT STR_TO_DATE(DT_PRESCRIPTION,"%Y/%m/%d %T") FROM `dados`.`urgency_prescriptions`;
-INSERT INTO Hours SELECT STR_TO_DATE(DATE_OF_BIRTH,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
-INSERT INTO Hours SELECT STR_TO_DATE(DT_ADMITION_URG,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
-INSERT INTO Hours SELECT STR_TO_DATE(DT_ADMITION_TRAIGE,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
-INSERT INTO Hours SELECT STR_TO_DATE(DT_DIAGNOSIS,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
-INSERT INTO Hours SELECT STR_TO_DATE(DT_DISCHARGE,"%Y/%m/%d %T") FROM `dados`.`urgency_episodes`;
-INSERT INTO Hours SELECT STR_TO_DATE(DT_PRESCRIPTION,"%Y/%m/%d %T") FROM `dados`.`urgency_procedures`;
-INSERT INTO Hours SELECT STR_TO_DATE(DT_BEGIN,"%Y/%m/%d %T") FROM `dados`.`urgency_procedures`;
+CREATE TEMPORARY TABLE Hours (`hora` INT, `minuto` INT) ENGINE=MEMORY; -- Tabela que aglomera todas as horas
+INSERT INTO Hours(hora,minuto) SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_PRESCRIPTION,' ',-1),':',1) ,(SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_PRESCRIPTION,' ',-1),':',-1)) FROM `dados`.`urgency_prescriptions`;
+INSERT INTO Hours(hora,minuto) SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DATE_OF_BIRTH,' ',-1),':',1) ,(SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DATE_OF_BIRTH,' ',-1),':',-1)) FROM `dados`.`urgency_episodes`; 
+INSERT INTO Hours(hora,minuto) SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_ADMITION_URG,' ',-1),':',1) ,(SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_ADMITION_URG,' ',-1),':',-1)) FROM `dados`.`urgency_episodes`; 
+INSERT INTO Hours(hora,minuto) SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_ADMITION_TRAIGE,' ',-1),':',1) ,(SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_ADMITION_TRAIGE,' ',-1),':',-1)) FROM `dados`.`urgency_episodes`;
+INSERT INTO Hours(hora,minuto) SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_DIAGNOSIS,' ',-1),':',1) ,(SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_DIAGNOSIS,' ',-1),':',-1)) FROM `dados`.`urgency_episodes`;
+INSERT INTO Hours(hora,minuto) SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_DISCHARGE,' ',-1),':',1) ,(SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_DISCHARGE,' ',-1),':',-1)) FROM `dados`.`urgency_episodes`;
+INSERT INTO Hours(hora,minuto) SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_PRESCRIPTION,' ',-1),':',1) ,(SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_PRESCRIPTION,' ',-1),':',-1)) FROM `dados`.`urgency_procedures`;
+INSERT INTO Hours(hora,minuto) SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_BEGIN,' ',-1),':',1) ,(SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(DT_BEGIN,' ',-1),':',-1))  FROM `dados`.`urgency_procedures`;
+
+INSERT INTO Dim_Hour (Hour,Minute)
+SELECT DISTINCT hora,minuto FROM Hours;
+
+DROP TEMPORARY TABLE IF EXISTS Hours;
+
+
+DROP TEMPORARY TABLE IF EXISTS Dates;
+CREATE TEMPORARY TABLE Dates (`data` VARCHAR(11)); --  ENGINE=MEMORY; Se puser o engine memory dá table full Tabela que aglomera todas as datas
+-- ALTER TABLE Dates MAX_ROWS=1000000000;
+INSERT INTO Dates SELECT SUBSTRING_INDEX(DT_PRESCRIPTION,' ',1) FROM `dados`.`urgency_prescriptions`;
+INSERT INTO Dates SELECT SUBSTRING_INDEX(DATE_OF_BIRTH,' ',1) FROM `dados`.`urgency_episodes`;
+INSERT INTO Dates SELECT SUBSTRING_INDEX(DT_ADMITION_URG,' ',1) FROM `dados`.`urgency_episodes`;
+INSERT INTO Dates SELECT SUBSTRING_INDEX(DT_ADMITION_TRAIGE,' ',1) FROM `dados`.`urgency_episodes`;
+INSERT INTO Dates SELECT SUBSTRING_INDEX(DT_DIAGNOSIS,' ',1) FROM `dados`.`urgency_episodes`;
+INSERT INTO Dates SELECT SUBSTRING_INDEX(DT_DISCHARGE,' ',1) FROM `dados`.`urgency_episodes`;
+INSERT INTO Dates SELECT SUBSTRING_INDEX(DT_PRESCRIPTION,' ',1) FROM `dados`.`urgency_procedures`;
+INSERT INTO Dates SELECT SUBSTRING_INDEX(DT_BEGIN,' ',1) FROM `dados`.`urgency_procedures`;
+
+ALTER TABLE Dim_Date AUTO_INCREMENT = 1;
+
+
+
+-- Povoar Dim_Date_has_Dim_Hour -> Tabela resultante do relacionamento N:N
+INSERT INTO Dim_Date_has_Dim_Hour 
+SELECT idHour,idDate FROM 
+
+
+*/
 
 
 -- Povoar Dim_Date 
@@ -33,12 +64,16 @@ INSERT INTO Dates SELECT STR_TO_DATE(DT_DISCHARGE,"%Y/%m/%d %T") FROM `dados`.`u
 INSERT INTO Dates SELECT STR_TO_DATE(DT_PRESCRIPTION,"%Y/%m/%d %T") FROM `dados`.`urgency_procedures`;
 INSERT INTO Dates SELECT STR_TO_DATE(DT_BEGIN,"%Y/%m/%d %T") FROM `dados`.`urgency_procedures`;
 
-select STR_TO_DATE("2018/02/02 12:02:02","%h:%m:%s");
+select DT_DISCHARGE from `dados`.`urgency_episodes` order by DT_DISCHARGE;
+select count(*) from dates;
 
-ALTER TABLE Dim_Date AUTO_INCREMENT = 1;
 
 INSERT INTO Dim_Date(Date)
-SELECT DISTINCT data FROM Dates;
+SELECT DISTINCT data from Dates;
+
+select * FROM Dates order by data;
+
+DROP TEMPORARY TABLE Dates;
 
 
 -- Povoar Dim_Urgency_Prescription -> Dividir em vários slots para conseguir correr (SÓ POVOEI O PRIMEIRO INTERVALO)
@@ -46,8 +81,8 @@ INSERT INTO Dim_Urgency_Prescription(Cod_Prescription,Prof_Prescription,Quantity
 SELECT DISTINCT uP.COD_PRESCRIPTION, uP.ID_PROF_PRESCRIPTION, uP.QT, d.idDate, dr.idDrug
 FROM `dados`.`urgency_prescriptions` uP 
 LEFT JOIN Dim_Drug dr ON dr.Cod_Drug=uP.COD_DRUG AND dr.Description=uP.DESC_DRUG
-LEFT JOIN Dim_Date d ON d.Date=uP.DT_PRESCRIPTION
-WHERE `COD_PRESCRIPTION`>= 16369810 AND `COD_PRESCRIPTION` <16420000;
+LEFT JOIN Dim_Date d ON d.Date=STR_TO_DATE(uP.DT_PRESCRIPTION,"%Y/%m/%d %T")
+WHERE `COD_PRESCRIPTION`= 16369810; AND `COD_PRESCRIPTION` <16420000;
 
 INSERT INTO Dim_Urgency_Prescription(Cod_Prescription,Prof_Prescription,Quantity,FK_Date_Prescription,FK_Drug) 
 SELECT DISTINCT uP.COD_PRESCRIPTION, uP.ID_PROF_PRESCRIPTION, uP.QT, d.idDate, dr.idDrug
@@ -62,6 +97,8 @@ FROM `dados`.`urgency_prescriptions` uP
 LEFT JOIN Dim_Drug dr ON dr.Cod_Drug=uP.COD_DRUG AND dr.Description=uP.DESC_DRUG
 LEFT JOIN Dim_Date d ON d.Date=uP.DT_PRESCRIPTION
 WHERE `COD_PRESCRIPTION`>=16507000 AND `COD_PRESCRIPTION` <16545000;
+
+select * FROM `dados`.`urgency_prescriptions`;
 
 INSERT INTO Dim_Urgency_Prescription(Cod_Prescription,Prof_Prescription,Quantity,FK_Date_Prescription,FK_Drug) 
 SELECT DISTINCT uP.COD_PRESCRIPTION, uP.ID_PROF_PRESCRIPTION, uP.QT, d.idDate, dr.idDrug
@@ -159,33 +196,10 @@ SELECT DISTINCT ID_DESTINATION,DESC_DESTINATION FROM `dados`.`urgency_episodes`;
 -- Povoar Fact_Diagnosis -> Ainda não dá
 INSERT INTO Facto_Diagnosis....;
 
-
-CREATE SCHEMA dados;
-
 -- Povoar Dim_Level
-Use urgency;
--- Povoar todos os niveis 1
-INSERT INTO dim_level (idLevel,Cod_Level,Description)
-SELECT DISTINCT 1 AS idd,level_1_code,level_1_desc from `dados`.`icd9_hierarchy`;
--- Povoar todos os niveis 2
-INSERT INTO dim_level (idLevel,Cod_Level,Description)
-SELECT DISTINCT 2 AS idd,level_2_code,level_2_desc from `dados`.`icd9_hierarchy`;
--- Povoar todos os niveis 3
-INSERT INTO dim_level (idLevel,Cod_Level,Description)
-SELECT DISTINCT 3 AS idd,level_3_code,level_3_desc from `dados`.`icd9_hierarchy`;
--- Povoar todos os niveis 4
-INSERT INTO dim_level (idLevel,Cod_Level,Description)
-SELECT DISTINCT 4 AS idd,level_4_code,level_4_desc from `dados`.`icd9_hierarchy`;
--- Povoar todos os niveis 5
-INSERT INTO dim_level (idLevel,Cod_Level,Description)
-SELECT DISTINCT 5 AS idd,level_5_code,level_5_desc from `dados`.`icd9_hierarchy`;
+INSERT INTO Dim_Level (idLevel,CodLevel,Description) VALUES
+1, (SELECT 
 
--- Povoar Dim_Info
-INSERT INTO dim_info (cod_diagnosis,description,FK_LevelID,FK_LevelCod)
-SELECT a1.COD_DIAGNOSIS, a1.DIAGNOSIS, a2.idLevel, a2.Cod_Level
-FROM `dados`.`urgency_episodes` a1
-INNER JOIN 	dim_level a2 
-ON SUBSTRING_INDEX(a2.cod_level,'-',1) <= SUBSTRING_INDEX(a1.COD_DIAGNOSIS,'-',1)
 
 
 DELIMITER //
