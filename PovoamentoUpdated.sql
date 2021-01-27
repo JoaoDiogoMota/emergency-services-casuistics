@@ -99,7 +99,7 @@ SELECT DISTINCT DISTRICT FROM `dados`.`urgency_episodes`;
 -- ---------------------------------------------------------------------------------------------------------------------------------
 INSERT INTO Dim_Patient(Sex,FK_Date_Of_Birth,FK_District)
 SELECT uE.SEX,d.idDate,di.idDistrict 
-FROM `dados`.`urgency_episodes`uE
+FROM `dados`.`urgency_episodes` uE
 LEFT JOIN Dim_Date d ON d.Date=uE.DATE_OF_BIRTH
 LEFT JOIN Dim_District di ON di.District=uE.DISTRICT;
 
@@ -261,6 +261,20 @@ LEFT JOIN Dim_Date d ON d.Date=uE.DT_ADMITION_TRAIGE
 LEFT JOIN Dim_Color c ON c.idColor = uE.ID_COLOR
 WHERE uE.URG_EPISODE > 1860174 AND uE.URG_EPISODE <= 1883820;
 
+-- ---------------------------------------------------------------------------------------------------------------------------------
+-- POVOAMENTO DE DIM_INTERVENTION
+-- ---------------------------------------------------------------------------------------------------------------------------------
+-- Povoar Dim_Intervention
+INSERT INTO Dim_Intervention 
+SELECT DISTINCT ID_INTERVENTION, DESC_INTERVENTION FROM `dados`.`urgency_procedures`;
+
+-- Povoar Dim_Procedure
+INSERT INTO Dim_Procedure (idPrescription, Prof_Procedure, Prof_Cancel, Canceled, FK_Date_Prescription, FK_Date_Begin, FK_Intervention)
+SELECT a1.ID_PRESCRIPTION, a1.ID_PROFESSIONAL, a1.ID_PROFESSIONAL_CANCEL, a1.DT_CANCEL, a2.idDate, a3.idDate, a4.idIntervention
+FROM `dados`.`urgency_procedures` a1
+INNER JOIN Dim_Date a2 ON STR_TO_DATE(a1.DT_PRESCRIPTION,"%Y/%m/%d %T") = a2.Date
+INNER JOIN Dim_Date a3 ON STR_TO_DATE(a1.DT_BEGIN,"%Y/%m/%d %T") = a3.Date
+INNER JOIN Dim_Intervention a4 ON a1.ID_INTERVENTION = a4.idIntervention;
 
 /* SOLUÇAO COM DIM_HOUR
 
