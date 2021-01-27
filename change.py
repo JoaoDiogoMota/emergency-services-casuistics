@@ -14,7 +14,7 @@ uE.to_csv("urgency_Episodes.csv", index = False,sep=';')
 
 uProcedures = pd.read_csv("urgency_procedures.csv",sep=';')
 
-uProcedures['DESC_INTERVENTION'] = uProcedures['DESC_INTERVENTION'].replace(['Endovenoso'], 'Terapêutica Endovenoso')
+uProcedures['DESC_INTERVENTION'] = uProcedures['DESC_INTERVENTION'].replace(['Endovenoso'], 'Terapêutica Intravenosa')
 uProcedures['DESC_INTERVENTION'] = uProcedures['DESC_INTERVENTION'].replace(['Subcutânea'], 'Terapêutica Subcutânea')
 
 uProcedures.to_csv("urgency_procedures.csv", index = False,sep=';')
