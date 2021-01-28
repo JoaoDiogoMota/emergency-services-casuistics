@@ -166,26 +166,29 @@ FROM `dados`.`urgency_episodes` a1
 INNER JOIN 	dim_level a2 ON ( (SUBSTRING_INDEX(a2.cod_level,'-',1) <= a1.COD_DIAGNOSIS) AND (SUBSTRING_INDEX(a2.cod_level,'-',-1) >= a1.COD_DIAGNOSIS) AND a2.idLevel = 1)
 WHERE ( (INSTR(a1.COD_DIAGNOSIS,'V') = 0) AND (INSTR(a1.COD_DIAGNOSIS,'E') = 0) );
 
+-- ---------------------------------------------------------------------------------------------------------------------------------
+-- POVOAMENTO DA TABELA DIM_REASON
+-- ---------------------------------------------------------------------------------------------------------------------------------
+INSERT INTO Dim_Reason 
+SELECT DISTINCT ID_REASON,DESC_REASON FROM `dados`.`urgency_episodes`;
+
+-- ---------------------------------------------------------------------------------------------------------------------------------
+-- POVOAMENTO DA TABELA DIM_DESTINATION
+-- ---------------------------------------------------------------------------------------------------------------------------------
+INSERT INTO Dim_Destination
+SELECT DISTINCT ID_DESTINATION,DESC_DESTINATION FROM `dados`.`urgency_episodes`;
 
 -- ---------------------------------------------------------------------------------------------------------------------------------
 -- POVOAMENTO DA TABELA DE FACTOS - FACT_DIAGNOSIS 
 -- ---------------------------------------------------------------------------------------------------------------------------------
--- Povoar Dim_Reason 
-INSERT INTO Dim_Reason 
-SELECT DISTINCT ID_REASON,DESC_REASON FROM `dados`.`urgency_episodes`;
--- Povoar Dim_Destination
-INSERT INTO Dim_Destination
-SELECT DISTINCT ID_DESTINATION,DESC_DESTINATION FROM `dados`.`urgency_episodes`;
-
--- Povoar Fact_Diagnosis - TALEND
--- INSERT INTO Fact_Diagnosis (Urg_Episode,Prof_Diagnosis,Prof_Discharge,FK_Date_Diagnosis,FK_Destination,FK_Date_Discharge,FK_Reason,FK_Info)
--- SELECT DISTINCT a1.URG_EPISODE, a1.ID_PROF_DIAGNOSIS, a1.ID_PROF_DISCHARGE, a2.idDate,a3.idDestination,a4.idDate,a5.idReason,a6.idInfo
--- FROM `dados`.`urgency_episodes` a1
--- INNER JOIN Dim_Date a2 ON STR_TO_DATE(a1.DT_DIAGNOSIS,"%Y/%m/%d %T") = a2.Date
--- INNER JOIN Dim_Destination a3 ON a1.DESC_DESTINATION = a3.Description
--- INNER JOIN Dim_Date a4 ON STR_TO_DATE(a1.DT_DISCHARGE,"%Y/%m/%d %T") = a4.Date
--- INNER JOIN Dim_Reason a5 ON a1.DESC_REASON = a5.Description
--- INNER JOIN Dim_Info a6 ON a1.COD_DIAGNOSIS = a6.Cod_Diagnosis;
+INSERT INTO Fact_Diagnosis (Urg_Episode,Prof_Diagnosis,Prof_Discharge,FK_Date_Diagnosis,FK_Destination,FK_Date_Discharge,FK_Reason,FK_Info)
+SELECT DISTINCT a1.URG_EPISODE, a1.ID_PROF_DIAGNOSIS, a1.ID_PROF_DISCHARGE, a2.idDate,a3.idDestination,a4.idDate,a5.idReason,a6.idInfo
+FROM `dados`.`urgency_episodes` a1
+INNER JOIN Dim_Date a2 ON STR_TO_DATE(a1.DT_DIAGNOSIS,"%Y/%m/%d %T") = a2.Date
+INNER JOIN Dim_Destination a3 ON a1.DESC_DESTINATION = a3.Description
+INNER JOIN Dim_Date a4 ON STR_TO_DATE(a1.DT_DISCHARGE,"%Y/%m/%d %T") = a4.Date
+INNER JOIN Dim_Reason a5 ON a1.DESC_REASON = a5.Description
+INNER JOIN Dim_Info a6 ON a1.COD_DIAGNOSIS = a6.Cod_Diagnosis;
 
 -- ---------------------------------------------------------------------------------------------------------------------------------
 -- POVOAMENTO DA TABELA DE FACTOS - FACT_TRIAGE
@@ -276,7 +279,9 @@ INNER JOIN Dim_Date a2 ON STR_TO_DATE(a1.DT_PRESCRIPTION,"%Y/%m/%d %T") = a2.Dat
 INNER JOIN Dim_Date a3 ON STR_TO_DATE(a1.DT_BEGIN,"%Y/%m/%d %T") = a3.Date
 INNER JOIN Dim_Intervention a4 ON a1.ID_INTERVENTION = a4.idIntervention;
 
--- povoar fact urgency_episodes
+-- ---------------------------------------------------------------------------------------------------------------------------------
+-- POVOAMENTO DA TABELA DE FACTOS - FACT_URGENCY_EPISODES
+-- ---------------------------------------------------------------------------------------------------------------------------------
 INSERT INTO fact_urgency_episodes(Urg_Episode,Prof_Admission,FK_Patient,FK_Date_Admission,FK_External_Cause,FK_Urgency_Exams,FK_Procedure,FK_Urgency_Prescription)
 SELECT uE.URG_EPISODE, uE.ID_PROF_ADMITION, p.idPatient, d.idDate, e.idExternal_Cause, uEx.idUrgency_Exams, proc.idPrescription, uP.idUrgency_Prescription
 FROM `dados`.`urgency_episodes` uE
