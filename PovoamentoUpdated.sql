@@ -276,6 +276,21 @@ INNER JOIN Dim_Date a2 ON STR_TO_DATE(a1.DT_PRESCRIPTION,"%Y/%m/%d %T") = a2.Dat
 INNER JOIN Dim_Date a3 ON STR_TO_DATE(a1.DT_BEGIN,"%Y/%m/%d %T") = a3.Date
 INNER JOIN Dim_Intervention a4 ON a1.ID_INTERVENTION = a4.idIntervention;
 
+-- povoar fact urgency_episodes
+INSERT INTO fact_urgency_episodes(Urg_Episode,Prof_Admission,FK_Patient,FK_Date_Admission,FK_External_Cause,FK_Urgency_Exams,FK_Procedure,FK_Urgency_Prescription)
+SELECT uE.URG_EPISODE, uE.ID_PROF_ADMITION, p.idPatient, d.idDate, e.idExternal_Cause, uEx.idUrgency_Exams, proc.idPrescription, uP.idUrgency_Prescription
+FROM `dados`.`urgency_episodes` uE
+INNER JOIN Dim_Date d1 ON d1.Date=uE.DATE_OF_BIRTH
+INNER JOIN Dim_Patient p ON uE.Sex=p.SEX AND uE.DISTRICT=p.FK_District AND p.FK_Date_Of_Birth=d1.idDate
+INNER JOIN Dim_Date d ON d.Date=uE.DT_ADMITION_URG 
+INNER JOIN Dim_External_Cause e ON uE.ID_EXT_CAUSE=e.idExternal_Cause
+INNER JOIN `dados`.`urgency_exams` uExams ON uExams.URG_EPISODE=uE.URG_EPISODE 
+INNER JOIN Dim_Urgency_Exams uEx ON uExams.NUM_EXAM=uEx.num_Exame
+INNER JOIN `dados`.`urgency_procedures` uProcedures ON uProcedures.URG_EPISODE=uE.URG_EPISODE
+INNER JOIN Dim_Procedure proc ON uProcedures.ID_PRESCRIPTION=proc.idPrescription
+INNER JOIN `dados`.`urgency_prescriptions` uPrescriptions ON uPrescriptions.URG_EPISODE=uE.URG_EPISODE
+INNER JOIN Dim_Urgency_Prescription uP ON uP.Cod_Prescription=uPrescriptions.COD_PRESCRIPTION;
+
 /* SOLUÇAO COM DIM_HOUR
 
 DROP TEMPORARY TABLE IF EXISTS Hours;
