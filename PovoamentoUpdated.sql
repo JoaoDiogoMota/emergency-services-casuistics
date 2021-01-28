@@ -188,7 +188,7 @@ INNER JOIN Dim_Date a2 ON STR_TO_DATE(a1.DT_DIAGNOSIS,"%Y/%m/%d %T") = a2.Date
 INNER JOIN Dim_Destination a3 ON a1.DESC_DESTINATION = a3.Description
 INNER JOIN Dim_Date a4 ON STR_TO_DATE(a1.DT_DISCHARGE,"%Y/%m/%d %T") = a4.Date
 INNER JOIN Dim_Reason a5 ON a1.DESC_REASON = a5.Description
-INNER JOIN Dim_Info a6 ON a1.COD_DIAGNOSIS = a6.Cod_Diagnosis;
+INNER JOIN Dim_Info a6 ON a1.COD_DIAGNOSIS = a6.Cod_Diagnosis AND a1.DIAGNOSIS = a6.Description;
 
 -- ---------------------------------------------------------------------------------------------------------------------------------
 -- POVOAMENTO DA TABELA DE FACTOS - FACT_TRIAGE
