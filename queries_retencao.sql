@@ -33,7 +33,7 @@ BEGIN
     
     IF UEpisode IS NULL THEN SET Erro = 1; 
     END IF;
-    IF Erro = 1 THEN SELECT 'Numero de episódio de urgência é nulo, não pode ser.'; 
+    IF Erro = 1 THEN SELECT 'Número de Episódio de Urgência não pode ser nulo.'; 
     END IF;
     
 	START TRANSACTION;
@@ -57,22 +57,22 @@ BEGIN
     
     IF UEpisode IS NULL THEN SET Erro = 1; 
     END IF;
-    IF Erro = 1 THEN SELECT 'Numero de episódio de urgência é nulo, não pode ser.'; 
+    IF Erro = 1 THEN SELECT 'Número de Episódio de Urgência não pode ser nulo.'; 
     END IF;
     
     IF (Cod IS NULL OR Cod_Desc IS NULL) THEN SET Erro = 1; 
     END IF;
-    IF Erro = 1 THEN SELECT 'Numero de Código ou Descrição é nulo, não pode ser.'; 
+    IF Erro = 1 THEN SELECT 'Valor de Código ou Descrição não pode ser nulo.'; 
     END IF;
     
     SET nn_DProfissional = IFNULL(DProfissional,-1);
     SET nn_DchProfissional = IFNULL(DchProfissional,-1);
     SET nn_DataD = IFNULL(DataD,'1111/11/11 00:00:00');
     SET nn_Destino = IFNULL(Destino,-1);
-    SET nn_DestinoDesc = IFNULL(DestinoDesc,"Sem destino indicado");
+    SET nn_DestinoDesc = IFNULL(DestinoDesc,"Sem destino indicado.");
     SET nn_DataDch = IFNULL(DataDch,'1111/11/11 00:00:00');
     SET nn_Reason = IFNULL(Reason,-1);
-    SET nn_ReasonDesc = IFNULL(ReasonDesc,"Reason não fornecida");
+    SET nn_ReasonDesc = IFNULL(ReasonDesc,"Destino de Alta não fornecido.");
     
     START TRANSACTION;
     INSERT INTO Fact_Diagnosis(Urg_Episode,Prof_Diagnosis,Prof_Discharge,FK_Date_Diagnosis,FK_Destination,FK_Date_Discharge,FK_Reason,FK_Info)
@@ -140,12 +140,12 @@ BEGIN
     
     IF Cod_Prescription IS NULL THEN SET Erro = 1; 
 	END IF;
-	IF Erro = 1 THEN SELECT 'Código de prescrição é nulo, não pode ser.'; 
+	IF Erro = 1 THEN SELECT 'Código de Prescrição não pode ser nulo.'; 
 	END IF;
     
     IF Cod_Prescription NOT IN (SELECT a1.Cod_Prescription FROM Dim_Urgency_Prescription a1) THEN SET Erro = 1;
     END IF;
-    IF Erro = 1 THEN SELECT 'Não existe urgência com o código de prescrição fornecido. Inválido.'; 
+    IF Erro = 1 THEN SELECT 'Não existe Episódio de Urgência com o código de prescrição fornecido. Inválido.'; 
 	END IF;
     
     SET fk_DUP = (SELECT a1.idUrgency_Prescription FROM Dim_Urgency_Prescription a1 WHERE a1.Cod_Prescription = Cod_Prescription);
@@ -218,7 +218,7 @@ BEGIN
 	
     IF Urg_Episode IS NULL THEN SET Erro = 1; 
     END IF;
-    IF Erro = 1 THEN SELECT 'Numero de episódio de urgência é nulo, não pode ser.'; 
+    IF Erro = 1 THEN SELECT 'Número de Episódio de Emergência não pode ser nulo.'; 
     END IF;
     
     SET nn_ProfA = IFNULL(Prof_Admission,-1);
@@ -230,12 +230,12 @@ BEGIN
     
     IF nn_Prescription NOT IN (SELECT a1.Cod_Prescription FROM Dim_Urgency_Prescription a1) THEN SET Erro = 1;
     END IF;
-    IF Erro = 1 THEN SELECT 'Não existe urgência com o código de prescrição fornecido. Inválido.'; 
+    IF Erro = 1 THEN SELECT 'Não existe Episódio de Urgência com o código de prescrição fornecido. Inválido.'; 
 	END IF;
     
     IF nn_Procedure NOT IN (SELECT a1.idPrescription FROM Dim_Procedure a1) THEN SET Erro = 1;
     END IF;
-    IF Erro = 1 THEN SELECT 'Não existe procedimento com o codigo fornecido. Inválido.'; 
+    IF Erro = 1 THEN SELECT 'Não existe Episódio de Urgência com o código fornecido. Inválido.'; 
 	END IF;
     
     SET pp = (SELECT a1.idUrgency_Prescription FROM Dim_Urgency_Prescription a1 WHERE a1.Cod_Prescription = nn_Prescription); 
@@ -470,7 +470,7 @@ DELIMITER $
 CREATE TRIGGER IntegridadeTriageFact BEFORE INSERT ON Fact_Triage
 	FOR EACH ROW
     BEGIN
-		IF ( new.Urg_Episode in ( SELECT a1.Urg_Episode FROM Fact_Triage a1 ) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Já existe triagem com este Episódio de Urgência';
+		IF ( new.Urg_Episode in ( SELECT a1.Urg_Episode FROM Fact_Triage a1 ) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Este Episódio de Urgência já se encontra associado a uma triagem.';
         END IF;
     END $
 DELIMITER ;
@@ -480,7 +480,7 @@ DELIMITER $
 CREATE TRIGGER IntegridadeNovaDate BEFORE INSERT ON Dim_Date
 	FOR EACH ROW
 	BEGIN
-        IF ( new.Date in ( SELECT a1.Date FROM Dim_Date a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Date já existe na base de dados';
+        IF ( new.Date in ( SELECT a1.Date FROM Dim_Date a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Esta data já se encontra na Base de Dados.';
         END IF;
 	END $
 DELIMITER ;
@@ -490,7 +490,7 @@ DELIMITER $
 CREATE TRIGGER IntegridadeNovaCor BEFORE INSERT ON Dim_Color
 	FOR EACH ROW
     BEGIN
-		IF ( new.idColor in (SELECT a1.idColor FROM Dim_Color a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Cor já existe na base de dados';
+		IF ( new.idColor in (SELECT a1.idColor FROM Dim_Color a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Esta cor já se encontra na Base de Dados';
         END IF;
     END $
 DELIMITER ;
@@ -500,7 +500,7 @@ DELIMITER $
 CREATE TRIGGER IntegridadeDiagnosisFact BEFORE INSERT ON Fact_Diagnosis
 	FOR EACH ROW
     BEGIN
-		IF ( new.Urg_Episode in ( SELECT a1.Urg_Episode FROM Fact_Diagnosis a1 ) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Já existe Diagnostico com este Episódio de Urgência';
+		IF ( new.Urg_Episode in ( SELECT a1.Urg_Episode FROM Fact_Diagnosis a1 ) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Já existe um diagnóstico com este Episódio de Urgência';
         END IF;
     END $
 DELIMITER ;
@@ -521,7 +521,7 @@ CREATE TRIGGER DataValida BEFORE INSERT ON Dim_Date
 FOR EACH ROW
 BEGIN
     DECLARE novaData DATETIME; SET novaData = new.Date;
-	IF (novaData > CURRENT_TIMESTAMP()) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Data Invalida.';
+	IF (novaData > CURRENT_TIMESTAMP()) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Data Inválida.';
     END IF;
 END $
 DELIMITER ;
@@ -531,7 +531,7 @@ DELIMITER $
 CREATE TRIGGER IntegridadeUrgencyEpisodesFact BEFORE INSERT ON Fact_Urgency_Episodes
 	FOR EACH ROW
     BEGIN
-		IF ( new.Urg_Episode in ( SELECT a1.Urg_Episode FROM Fact_Urgency_Episodes a1 ) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Já existe Episódio de Urgência com este id';
+		IF ( new.Urg_Episode in ( SELECT a1.Urg_Episode FROM Fact_Urgency_Episodes a1 ) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Já existe Episódio de Urgência com este identificador.';
         END IF;
     END$
 DELIMITER ;
@@ -541,7 +541,7 @@ DELIMITER $
 CREATE TRIGGER IntegridadeNovaCausa BEFORE INSERT ON Dim_External_Cause
 	FOR EACH ROW
 	BEGIN
-        IF ( new.Description in ( SELECT a1.Description FROM Dim_External_Cause a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Causa já existe na base de dados';
+        IF ( new.Description in ( SELECT a1.Description FROM Dim_External_Cause a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Esta causa já se encontra na Base de Dados.';
         END IF;
 	END $
 DELIMITER ;
@@ -551,7 +551,7 @@ DELIMITER $
 CREATE TRIGGER IntegridadeIntervenção BEFORE INSERT ON Dim_Intervention
 	FOR EACH ROW
 	BEGIN
-        IF ( new.idIntervention in ( SELECT a1.idIntervention FROM Dim_Intervention a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Intervenção já existe na base de dados';
+        IF ( new.idIntervention in ( SELECT a1.idIntervention FROM Dim_Intervention a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Esta intervenção já se encontra na Base de Dados';
         END IF;
 	END $
 DELIMITER ;
@@ -561,7 +561,7 @@ DELIMITER $
 CREATE TRIGGER IntegridadeDistricto BEFORE INSERT ON Dim_District
 	FOR EACH ROW
 	BEGIN
-        IF ( new.District in ( SELECT a1.District FROM Dim_District a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Districto já existe na base de dados';
+        IF ( new.District in ( SELECT a1.District FROM Dim_District a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Este distrito já se encontra na Base de Dados.';
         END IF;
 	END $
 DELIMITER ;
@@ -571,7 +571,7 @@ DELIMITER $
 CREATE TRIGGER IntegridadeDrug BEFORE INSERT ON Dim_Drug
 	FOR EACH ROW
 	BEGIN
-        IF ( new.Cod_Drug in ( SELECT a1.Cod_Drug FROM Dim_Drug a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Medicamento já existe na base de dados';
+        IF ( new.Cod_Drug in ( SELECT a1.Cod_Drug FROM Dim_Drug a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Este fármaco já se encontra na Base de Dados';
         END IF;
 	END $
 DELIMITER ;
@@ -581,7 +581,7 @@ DELIMITER $
 CREATE TRIGGER IntegridadePrescription BEFORE INSERT ON Dim_Urgency_Prescription
 	FOR EACH ROW
 	BEGIN
-        IF ( new.Cod_Prescription in ( SELECT a1.Cod_Prescription FROM Dim_Urgency_Prescription a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT= 'Cod_Prescription já existe na base de dados';
+        IF ( new.Cod_Prescription in ( SELECT a1.Cod_Prescription FROM Dim_Urgency_Prescription a1) ) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT= 'Este código de prescrição já se encontra na Base de Dados';
         END IF;
 	END $
 DELIMITER ;
