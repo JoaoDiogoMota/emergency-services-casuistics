@@ -84,18 +84,27 @@ DELIMITER ;
 -- Procedure para inserir um novo nivel de diagnóstico + a
 -- a sua descrição. Valores nulos não tolerados
 -- -----------------------------------------------------
-DROP PROCEDURE IF EXISTS InserirNovoDimInfo;
-DELIMITER $$
+DELIMITER 
 CREATE PROCEDURE InserirNovoDimInfo(Codigo VARCHAR(45), Descricao VARCHAR(250))
 BEGIN
 	DECLARE Id INT; 
     DECLARE Cod VARCHAR(15);
     
     SET Id = 1;
-    SET Cod = (SELECT l1.Cod_Level FROM Dim_Level l1 
+    
+	
+    IF ( INSTR(Codigo,'E') > 0 ) THEN SET Cod = 'E';
+    END IF;
+    
+    IF ( INSTR(Codigo,'V') > 0 ) THEN SET Cod = 'V';
+    END IF;
+    
+    IF ( (INSTR(Codigo,'V') = 0) AND (INSTR(Codigo,'E') = 0) ) 
+		THEN SET Cod = (SELECT l1.Cod_Level FROM Dim_Level l1 
 				WHERE (l1.idLevel = 1) AND (
-					(CONVERT(SUBSTRING_INDEX(l1.cod_level,'-',1),DOUBLE) <= CONVERT('98',DOUBLE)) AND 
-				   ((CONVERT(SUBSTRING_INDEX(l1.cod_level,'-',-1),DOUBLE)+1) > CONVERT('98',DOUBLE) ) ) );
+						(CONVERT(SUBSTRING_INDEX(l1.cod_level,'-',1),DOUBLE) <= CONVERT(Codigo,DOUBLE)) AND 
+						((CONVERT(SUBSTRING_INDEX(l1.cod_level,'-',-1),DOUBLE)+1) > CONVERT(Codigo,DOUBLE) ) ) );
+    END IF;
 	
     INSERT INTO Dim_Info(Cod_Diagnosis,Description,FK_LevelID,FK_LevelCod) VALUES (Codigo,Descricao,Id,Cod);
     
@@ -119,7 +128,7 @@ BEGIN
 	INSERT INTO Dim_Urgency_Prescription(Cod_Prescription, Prof_Prescription, FK_Date_Prescription) VALUES (nn_CodPrescription, nn_ProfPrescription, getFKdata(nn_DatePrescription));
 END $$
 DELIMITER ;
-CALL InsereUrgencyPrescription(null,null,null);
+ CALL InsereUrgencyPrescription(null,null,null);
 -- -----------------------------------------------------
 -- Procedure para inserir novas entradas na tabela N to N
 -- Não permite a existência de valores nulos
@@ -341,7 +350,7 @@ DETERMINISTIC
 BEGIN
     DECLARE chave INT;
     
-    IF ( (Cod,Diag) NOT IN ( SELECT a1.Cod_Diagnosis, a1.Description FROM Dim_Info a1 ) ) THEN CALL InsereNovoDimInfo(Cod,Diag);
+    IF ( (Cod,Diag) NOT IN ( SELECT a1.Cod_Diagnosis, a1.Description FROM Dim_Info a1 ) ) THEN CALL InserirNovoDimInfo(Cod,Diag);
     END IF;
     
     SET chave = (SELECT a1.idInfo FROM Dim_Info a1 WHERE Cod = a1.Cod_Diagnosis AND Diag = a1.Description );
