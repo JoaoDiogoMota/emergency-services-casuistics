@@ -13,8 +13,14 @@ Projeto sobre a Casuística do Serviço de Urgência de um hospital nacional, pa
 
 ```
 Novo schema criado para import -> dados
+change.py -> Correção das datas de nascimento
+noNullID.py -> Correção dos valores nulos dos ficheiros csv
+Povoamento.sql -> Povoamento inicial do Data Warehouse
+retencao.sql -> Criação do schema para a área de retenção e respetivas relações
+queries_retencao.sql -> Tratamento dos dados e inserção na área de retenção
+toCSV.sql -> Migração dos dados da área de retenção para ficheiros csv
 ```
 
 ## Entrega do Projeto
 
-31 Janeiro de 2021
+7 de janeiro de 2021
