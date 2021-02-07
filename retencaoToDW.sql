@@ -445,19 +445,15 @@ BEGIN
     CREATE VIEW vPD AS SELECT * FROM `urgency-t2`.Prescription_Drug;
     WHILE(i<=size) DO
 		SET d = (SELECT(getFKPrescrptionDrugDrug((SELECT Cod_Drug FROM Dim_Drug dD JOIN Prescription_Drug pD ON dD.idDrug=pD.Drug LIMIT i,1),(SELECT Description FROM Dim_Drug dD JOIN Prescription_Drug pD ON dD.idDrug=pD.Drug LIMIT i,1))));
-		SET uP = (SELECT(getFKPrescrptionDrugPrescription((SELECT Cod_Prescription FROM Dim_Urgency_Prescription dUP JOIN Prescription_Drug pD ON dUP.idUrgency_Prescription=pD.Urgency_Prescription LIMIT 0,1),(SELECT Prof_Prescription FROM Dim_Urgency_Prescription dUP JOIN Prescription_Drug pD ON dUP.idUrgency_Prescription=pD.Urgency_Prescription LIMIT 0,1))));
+		SET uP = (SELECT(getFKPrescrptionDrugPrescription((SELECT Cod_Prescription FROM Dim_Urgency_Prescription dUP JOIN Prescription_Drug pD ON dUP.idUrgency_Prescription=pD.Urgency_Prescription LIMIT i,1),(SELECT Prof_Prescription FROM Dim_Urgency_Prescription dUP JOIN Prescription_Drug pD ON dUP.idUrgency_Prescription=pD.Urgency_Prescription LIMIT i,1))));
         SET QT = (SELECT Quantity FROM Prescription_Drug LIMIT i,1);
-		IF(uP NOT IN (SELECT Urgency_Prescription FROM vPD) AND d NOT IN (SELECT Drug FROM vPD) AND QT NOT IN (SELECT Quantity FROM vPD)) THEN INSERT INTO `urgency-t2`.Prescription_Drug VALUES (uP,d,QT); END IF;
+		IF((uP,d,QT)NOT IN (SELECT a1.Urgency_Prescription,a1.Drug,a1.Quantity FROM Prescription_Drug a1)) THEN INSERT INTO `urgency-t2`.Prescription_Drug VALUES (uP,d,QT); END IF;
         SET i = i+1;
 	END WHILE;
     drop view vPD;
     
 END $$
 DELIMITER ;
-select * FROM Prescription_Drug ;
-select * FROM `urgency-t2`.Dim_Drug where idDrug=95402;
-select * FROM Dim_Urgency_PrescriptioN;
-
 
 -- Inserção de novos Diagnosticos no DW
 DROP PROCEDURE IF EXISTS InserirFact_Episodes;
@@ -471,33 +467,39 @@ BEGIN
     DECLARE d DATETIME;
 	DECLARE profA INT;
     DECLARE pac INT;
-    DECLARE eC INT;
-    DECLARE eC INT
+    DECLARE eC VARCHAR(24);
+    DECLARE uENum VARCHAR(23);
+    DECLARE uED VARCHAR(104);
     DECLARE c VARCHAR(8);
+    DECLARE pacDate DATETIME;
+    DECLARE pacDist VARCHAR(20);
+    DECLARE pacSex VARCHAR(1);
+    DECLARE pId INT;
+    DECLARE uPCod INT;
     SET size = (SELECT COUNT(*) FROM Fact_Triage);
     SET i = 0;
-    DROP VIEW IF EXISTS vDiagnosis;
-    CREATE VIEW vDiagnosis AS SELECT Urg_Episode FROM `urgency-t2`.Fact_Diagnosis;
+    DROP VIEW IF EXISTS vFactEpisodes;
+    CREATE VIEW vFactEpisodes AS SELECT Urg_Episode FROM `urgency-t2`.Fact_Urgency_Episodes;
     
     WHILE(i<size) DO
         SET u = (SELECT Urg_Episode FROM Fact_Urgency_Episodes LIMIT i,1);
         SET profA = (SELECT Prof_Admission FROM Fact_Urgency_Episodes LIMIT i,1);
-        SET pac = (SELECT idPatient FROM Dim_Patient dP JOIN Fact_Urgency_Episodes fUE ON dP.idPatient=fUE=FK_Patient WHERE fUE.Urg_Episode=u);
-        SET d = (SELECT Date FROM Dim_Date dD JOIN Fact_Urgency_Episodes fUE ON dD.idDate=FUE.FK_Date_Admission WHERE fUE.Urg_Episode=u);
-        SET eC = (SELECT idExternal_Cause FROM Dim_External_Cause dE JOIN Fact_Urgency_Episodes fUE ON dE.idExternal_Cause=fUE.FK_External_Cause WHERE fUE.Urg_Episode=u);
-        SET uE = (SELECT idUrgency_Exams FROM Dim_Urgency_Exams dUE JOIN Fact_Urgency_Episodes fUE ON dUE.idUrgency_Exams=fUE.FK_Urgency_Exams WHERE fUE.Urg_Episode=u);
-        SET 
+        SET pacSex = (SELECT Sex FROM Dim_Patient dP JOIN Fact_Urgency_Episodes fUE ON dP.idPatient=fUE.FK_Patient WHERE fUE.Urg_Episode=u);
+	    SET pacDate = (SELECT Date FROM Dim_Patient dP JOIN Fact_Urgency_Episodes fUE ON dP.idPatient=fUE.FK_Patient JOIN Dim_Date dD ON dD.idDate=dP.FK_Date_Of_Birth WHERE fUE.Urg_Episode=u);
+        SET pacDist = (SELECT District FROM Dim_Patient dP JOIN Fact_Urgency_Episodes fUE ON dP.idPatient=fUE.FK_Patient JOIN Dim_District dD ON dD.idDistrict=dP.FK_District WHERE fUE.Urg_Episode=u);
+        SET d = (SELECT Date FROM Dim_Date dD JOIN Fact_Urgency_Episodes fUE ON dD.idDate=fUE.FK_Date_Admission WHERE fUE.Urg_Episode=u);
+        SET eC = (SELECT Description FROM Dim_External_Cause dE JOIN Fact_Urgency_Episodes fUE ON dE.idExternal_Cause=fUE.FK_External_Cause WHERE fUE.Urg_Episode=u);
+        SET uENum = (SELECT Num_Exame FROM Dim_Urgency_Exams dUE JOIN Fact_Urgency_Episodes fUE ON dUE.idUrgency_Exams=fUE.FK_Urgency_Exams WHERE fUE.Urg_Episode=u);
+        SET uED = (SELECT Description FROM Dim_Urgency_Exams dUE JOIN Fact_Urgency_Episodes fUE ON dUE.idUrgency_Exams=fUE.FK_Urgency_Exams WHERE fUE.Urg_Episode=u);
+        SET pId = (SELECT idPrescription FROM Dim_Procedure dP JOIN Fact_Urgency_Episodes fUE ON dP.idPrescription=fUE.FK_Procedure WHERE fUE.Urg_Episode=u);
+        SET uPCod = (SELECT Cod_Prescription FROM Dim_Urgency_Prescription dUP JOIN Fact_Urgency_Episodes fUE ON dUP.idUrgency_Prescription=fUE.FK_Urgency_Prescription WHERE fUE.Urg_Episode=u);
         
-        SET d2 = (SELECT Date FROM Dim_Date dD JOIN Fact_Diagnosis fD ON dD.idDate=FD.FK_Date_Discharge WHERE fD.Urg_Episode=u);
-        SET dest = (SELECT Description FROM Dim_Destination dD JOIN Fact_Diagnosis fD ON dD.idDestination=FD.FK_Destination WHERE fD.Urg_Episode=u);
-        SET reason = (SELECT Description FROM Dim_Reason dR JOIN Fact_Diagnosis fD ON dR.idReason=FD.FK_Reason WHERE fD.Urg_Episode=u);
-        SET codinfo = (SELECT Cod_Diagnosis FROM Dim_Info dI JOIN Fact_Diagnosis fD ON dI.idInfo=FD.FK_Info WHERE fD.Urg_Episode=u);
-        SET descinfo = (SELECT Description FROM Dim_Info dI JOIN Fact_Diagnosis fD ON dI.idInfo=FD.FK_Info WHERE fD.Urg_Episode=u);
-        IF(u NOT IN (SELECT * FROM vDiagnosis)) THEN INSERT INTO `urgency-t2`.Fact_Diagnosis VALUES (u,(SELECT Prof_Diagnosis FROM Fact_Diagnosis LIMIT i,1),(SELECT Prof_Discharge FROM Fact_Diagnosis LIMIT i,1),
-        getFKdata2(d),getFKdestination2(dest),getFKdata2(d2),getFKreason2(reason),getFKinfo2(codinfo,descinfo)); END IF;
+        
+        IF(u NOT IN (SELECT * FROM vFactEpisodes)) THEN INSERT INTO `urgency-t2`.Fact_Urgency_Episodes VALUES (u,profA,getFKPatient(pacSex,pacDate,pacDist),getFKdata2(d),getFKExternalCause(eC),
+        getFKUrgency_Exams2(uENum,uED),pID,getFKUrgency_Prescription2(uPCod)); END IF;
         SET i = i+1;
 	END WHILE;
-    drop view vDiagnosis;
+    drop view vFactEpisodes;
 END $$
 DELIMITER ;
 
@@ -610,6 +612,66 @@ BEGIN
         RETURN chave;
 END $$
 DELIMITER ;
+
+DROP FUNCTION IF EXISTS getFKPatient;
+DELIMITER $$
+CREATE FUNCTION getFKPatient (sex VARCHAR(1),data DATETIME, dist VARCHAR(20)) RETURNS INT
+DETERMINISTIC
+BEGIN
+        DECLARE chave INT; 
+		
+        SET chave = (SELECT idPatient FROM `urgency-t2`.Dim_Patient d WHERE Sex=sex AND getFKdata2(data)=FK_Date_Of_Birth AND getFKdistrict2(dist)=FK_District LIMIT 1);
+        
+        RETURN chave;
+END $$
+DELIMITER ;
+
+DROP FUNCTION IF EXISTS getFKExternalCause;
+DELIMITER $$
+CREATE FUNCTION getFKExternalCause (descrip VARCHAR(24)) RETURNS INT
+DETERMINISTIC
+BEGIN
+        DECLARE chave INT; 
+		
+        SET chave = (SELECT idExternal_Cause FROM `urgency-t2`.Dim_External_Cause d WHERE d.Description=descrip);
+        
+        RETURN chave;
+END $$
+DELIMITER ;
+
+select * from `urgency-t2`.Dim_External_Cause;
+select * FROM Dim_External_Cause;
+insert into `urgency-t2`.Dim_External_Cause VALUES (23,'Desconhecida');
+
+
+DROP FUNCTION IF EXISTS getFKUrgency_Exams2;
+DELIMITER $$
+CREATE FUNCTION getFKUrgency_Exams2 (num VARCHAR(23),descrip VARCHAR(24)) RETURNS INT
+DETERMINISTIC
+BEGIN
+        DECLARE chave INT; 
+		
+        SET chave = (SELECT idUrgency_Exams FROM `urgency-t2`.Dim_Urgency_Exams d WHERE d.Num_Exame=num AND d.Description=descrip);
+        
+        RETURN chave;
+END $$
+DELIMITER ;
+
+
+DROP FUNCTION IF EXISTS getFKUrgency_Prescription2;
+DELIMITER $$
+CREATE FUNCTION getFKUrgency_Prescription2 (cod INT) RETURNS INT
+DETERMINISTIC
+BEGIN
+        DECLARE chave INT; 
+		
+        SET chave = (SELECT idUrgency_Prescription FROM `urgency-t2`.Dim_Urgency_Prescription d WHERE d.Cod_Prescription=cod);
+        
+        RETURN chave;
+END $$
+DELIMITER ;
+
+
 
 
 
