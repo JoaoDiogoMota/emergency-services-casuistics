@@ -13,6 +13,7 @@ Projeto sobre a Casuística do Serviço de Urgência de um hospital nacional, pa
 
 ```
 Novo schema criado para import -> dados
+```
 
 | Ficheiro             | Informação                                                                           | 
 | ---------------------|:------------------------------------------------------------------------------------:|
@@ -25,7 +26,7 @@ Novo schema criado para import -> dados
 | retencaoToDW.sql     | Atualização do Data Warehouse com os dados da área de retenção                       | 
 | updateDW.sql         | Script para atualização do Data Warehouse e eliminação dos dados da área de retenção |
 
-```
+
 
 ## Entrega do Projeto
 
