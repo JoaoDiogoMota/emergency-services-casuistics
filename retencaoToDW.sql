@@ -365,9 +365,9 @@ END $$
 DELIMITER ;
 
 
-DROP PROCEDURE IF EXISTS InserirFact_Diagnosis;
+DROP PROCEDURE IF EXISTS InserirDim_Procedures;
 DELIMITER $$
-CREATE PROCEDURE InserirFact_Diagnosis()
+CREATE PROCEDURE InserirDim_Procedures()
 BEGIN
 	
 	DECLARE size INT;
