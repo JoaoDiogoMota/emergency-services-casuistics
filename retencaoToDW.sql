@@ -428,7 +428,7 @@ BEGIN
 END $$
 DELIMITER ;
 
--- Inserção de Prescription_Drug no DW ----------- Nao da
+-- Inserção de Prescription_Drug no DW ----------- 
 DROP PROCEDURE IF EXISTS inserirPrescription_Drug;
 DELIMITER $$
 CREATE PROCEDURE inserirPrescription_Drug()
