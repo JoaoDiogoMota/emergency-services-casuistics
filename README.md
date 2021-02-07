@@ -16,7 +16,7 @@ Novo schema criado para import -> dados
 ```
 
 | Ficheiro             | Informação                                                                           | 
-| ---------------------|:------------------------------------------------------------------------------------:|
+| ---------------------|--------------------------------------------------------------------------------------|
 | change.py            | Correção das datas de nascimento                                                     |
 | noNullID.py          | Correção dos valores nulos dos ficheiros csv                                         |
 | Povoamento.sql       | Povoamento inicial do Data Warehouse                                                 |
